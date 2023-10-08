@@ -24,9 +24,9 @@
      </div>
 
      <div> 
-        <button onclick="login()">Login</button>
-        <button onclick="getDashboard()">Dashboard</button>
-        <button onclick="getSettings()">Settings page</button>
+        <button id = "login" onclick="login()">Login</button>
+        <button id  = "dashboard" onclick="getDashboard()">Dashboard</button>
+        <button id = "settings" onclick="getSettings()">Settings page</button>
      </div>
 
     </main>
@@ -104,6 +104,60 @@ function getSettings() {
         }
     });
 }
+function handleNavigation() {
+            const token = localStorage.getItem('jwt');
+            const currentPath = window.location.pathname;
+
+            if (token) {
+                // Decode the JWT token and check its expiration
+                const decodedToken = decodeJWT(token);
+                if (decodedToken.exp < Date.now() / 1000) {
+
+                    localStorage.removeItem('jwt');
+                    window.location.href = '/';
+                    return; // Stop further navigation handling
+                }
+
+                if (currentPath === '/dashboard') {
+                    getDashboard();
+                } else if (currentPath === '/settings') {
+                    getSettings();
+                }
+            } else {
+
+                window.location.href = '/';
+            }
+        }
+
+
+        function decodeJWT(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+
+                return JSON.parse(jsonPayload);
+            } catch (error) {
+                console.error('Error decoding JWT token:', error);
+                return {};
+            }
+        }
+        window.onload = function () {
+            handleNavigation();
+            document.getElementById('login').addEventListener('click', login);
+            document.getElementById('dashboard').addEventListener('click', function() {
+              
+                history.pushState({}, '', '/api/dashboard');
+                getDashboard();
+            });
+            document.getElementById('settings').addEventListener('click', function() {
+      
+                history.pushState({}, '', '/api/settings');
+                getSettings();
+            });
+        };
 
 </script>
 </body>
